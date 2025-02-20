@@ -5,19 +5,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { saveUser } from "@/utilities/utiliti";
+import useAuth from "@/hooks/useAuth";
 
 const Login = () => {
+  const { signInUser, signInWithGoogle, user, } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const location = useLocation()
+  const from = location?.state?.from?.pathname || '/'
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    console.log(data);
+  const onSubmit = async (data) => {
+    const { email, password, } = data;
+
+    try {
+      await signInUser(email, password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      console.log(err?.message);
+    }
   };
+console.log(user);
+  // Google Signin
+  const handleGoogleSignIn = async () => {
+    try {
+      const data = await signInWithGoogle()
+      await saveUser(data?.user)
+      navigate(from, { replace: true });
+    } catch (err) {
+      console.log(err?.message);
+    }
+  }
+
+  if (user) return <Navigate to={from} replace={true} />
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
@@ -108,8 +135,10 @@ const Login = () => {
 
           {/* Google Login Button */}
           <Button
-            className="w-full flex items-center justify-center gap-2  bg-red-500 hover:bg-red-600 text-white">
-            <img src="https://www.svgrepo.com/show/303108/google-icon.svg" alt="Google" className="w-5 h-5" />
+            onClick={handleGoogleSignIn}
+            className="w-full flex items-center justify-center gap-2  bg-red-500 hover:bg-red-600 text-white"
+          >
+            <img src="https://docs.material-tailwind.com/icons/google.svg" alt="Google" className="w-5 h-5" />
             Continue with Google
           </Button>
         </CardContent>

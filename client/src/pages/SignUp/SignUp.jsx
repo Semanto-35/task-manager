@@ -5,19 +5,45 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import useAuth from "@/hooks/useAuth";
+import { saveUser } from "@/utilities/utiliti";
 
 const SignUp = () => {
+  const { createNewUser, signInWithGoogle, loading, updateUserProfile, } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    console.log(data);
+  const onSubmit = async (data) => {
+    const { name, email, password, } = data;
+    const image = "https://i.ibb.co.com/Jwn4D7vk/user.jpg"
+
+    try {
+      const result = await createNewUser(email, password);
+      await updateUserProfile(name, image);
+      await saveUser({ ...result?.user, displayName: name, photoURL: image });
+      navigate('/');
+    } catch (error) {
+      console.log(error?.message);
+    }
   };
+
+  // Google Signin
+  const handleGoogleSignIn = async () => {
+    try {
+      const data = await signInWithGoogle()
+      await saveUser(data?.user)
+      navigate('/');
+    } catch (err) {
+      console.log(err?.message);
+    }
+  }
 
 
   return (
@@ -108,7 +134,11 @@ const SignUp = () => {
 
             {/* Submit Button */}
             <Button type="submit" className="w-full">
-              Sign Up
+            {loading ? (
+              "Signing Up"
+            ) : (
+              'Sign Up'
+            )}
             </Button>
           </form>
 
@@ -119,8 +149,8 @@ const SignUp = () => {
             </Link>
           </p>
 
-           {/* Divider */}
-           <div className="flex items-center my-4">
+          {/* Divider */}
+          <div className="flex items-center my-4">
             <div className="flex-grow border-t border-gray-300"></div>
             <span className="mx-2 text-gray-500">or</span>
             <div className="flex-grow border-t border-gray-300"></div>
@@ -128,8 +158,10 @@ const SignUp = () => {
 
           {/* Google Login Button */}
           <Button
-            className="w-full flex items-center justify-center gap-2  bg-red-500 hover:bg-red-600 text-white">
-            <img src="https://www.svgrepo.com/show/303108/google-icon.svg" alt="Google" className="w-5 h-5" />
+            onClick={handleGoogleSignIn}
+            className="w-full flex items-center justify-center gap-2  bg-red-500 hover:bg-red-600 text-white"
+          >
+            <img src="https://docs.material-tailwind.com/icons/google.svg" alt="Google" className="w-5 h-5" />
             Continue with Google
           </Button>
         </CardContent>

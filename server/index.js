@@ -45,11 +45,78 @@ const client = new MongoClient(uri, {
   }
 });
 
+
+// verifyToken
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token
+
+  if (!token) {
+    return res.status(401).send({ message: 'unauthorized access' })
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: 'unauthorized access' })
+    }
+    req.user = decoded
+    next()
+  })
+}
+
+
 async function run() {
   try {
+    const db = client.db('task_manager')
+    const usersCollection = db.collection('users')
 
 
 
+    // Generate jwt token
+    app.post('/jwt', async (req, res) => {
+      const email = req.body
+      const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '365d',
+      })
+      res
+        .cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        })
+        .send({ success: true })
+    });
+
+    // Logout/clear cookie from browser
+    app.get('/logout', async (req, res) => {
+      try {
+        res
+          .clearCookie('token', {
+            maxAge: 0,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+          })
+          .send({ success: true })
+      } catch (err) {
+        res.status(500).send(err)
+      }
+    });
+
+
+    // save a user in DB
+    app.post('/users/:email', async (req, res) => {
+      const email = req.params.email
+      const query = { email }
+      const user = req.body
+
+      const isExist = await usersCollection.findOne(query)
+      if (isExist) {
+        return res.send(isExist)
+      }
+      const result = await usersCollection.insertOne({
+        ...user,
+        timestamp: Date.now(),
+      })
+      res.send(result);
+    });
 
 
 
