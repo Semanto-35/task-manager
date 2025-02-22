@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion, } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, Timestamp, } = require('mongodb');
 const jwt = require('jsonwebtoken');
 
 
@@ -67,6 +67,7 @@ async function run() {
   try {
     const db = client.db('task_manager')
     const usersCollection = db.collection('users')
+    const tasksCollection = db.collection('tasks')
 
 
 
@@ -117,6 +118,74 @@ async function run() {
       })
       res.send(result);
     });
+
+
+    // Add a new task
+    app.post("/tasks", verifyToken, async (req, res) => {
+      const { title, description, category } = req.body;
+      const count = await tasksCollection.countDocuments();
+
+      const newTask = { title, description, category, timestamp: Date.now(), order: count, userId: req.user.uid, }
+      const result = await tasksCollection.insertOne(newTask)
+      res.send(result);
+    });
+
+
+    // get all tasks by user
+    app.get('/tasks', async (req, res) => {
+      const result = await tasksCollection.find().toArray();
+      res.send(result);
+    });
+
+
+    // delete a task by id
+    app.delete('/tasks/:id',verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await tasksCollection.deleteOne(query);
+      res.send(result);
+    });
+
+
+    // Update a task
+    app.put("/tasks/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const formData = req.body;
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: formData,
+      }
+      const options = { upsert: true }
+      const result = await tasksCollection.updateOne(filter, updatedDoc, options);
+      res.send(result);
+    });
+
+
+    // Reorder tasks
+    app.put("/tasks/reorder", verifyToken, async (req, res) => {
+      const { tasks } = req.body;
+
+      for (let task of tasks) {
+        const filter = { _id: new ObjectId(task._id) }
+        const updateDoc = {
+          $set: { order: task.order },
+        }
+        await tasksCollection.updateOne(filter, updateDoc)
+      }
+      res.send({ message: "Tasks reordered" });
+    });
+
+    app.patch("tasks/:id", async (req, res) => {
+      const { id } = req.params;
+      const { category, order } = req.body;
+      const filter = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: { category, order },
+      }
+      const result = await tasksCollection.updateOne(filter, updateDoc)
+      res.send(result);
+    });
+    
 
 
 

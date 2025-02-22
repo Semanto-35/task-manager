@@ -11,16 +11,19 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Home, ListChecks, Settings, LogOut } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import useAuth from "@/hooks/useAuth";
 
 const items = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Tasks", url: "/tasks", icon: ListChecks },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Overview", url: "", icon: Home },
+  { title: "Tasks", url: "/dashboard/tasks", icon: ListChecks },
+  { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];
 
-export function AppSidebar() {
+const AppSidebar = () => {
+  const { logOut } = useAuth();
+
   return (
     <Sidebar className="w-64 bg-white dark:bg-gray-900 border-r">
       {/* Sidebar Header */}
@@ -37,19 +40,10 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        `flex items-center gap-2 p-3 rounded-md transition ${
-                          isActive
-                            ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
-                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                        }`
-                      }
-                    >
+                    <Link to={item.url}>
                       <item.icon className="w-5 h-5" />
                       <span>{item.title}</span>
-                    </NavLink>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -60,10 +54,16 @@ export function AppSidebar() {
 
       {/* Sidebar Footer */}
       <SidebarFooter className="p-3">
-        <Button variant="destructive" className="w-full flex items-center gap-2">
+        <Button
+          onClick={logOut}
+          variant="destructive"
+          className="w-full flex items-center gap-2"
+        >
           <LogOut className="w-5 h-5" /> Logout
         </Button>
       </SidebarFooter>
     </Sidebar>
   );
 }
+
+export default AppSidebar;

@@ -28,7 +28,7 @@ const SignUp = () => {
       const result = await createNewUser(email, password);
       await updateUserProfile(name, image);
       await saveUser({ ...result?.user, displayName: name, photoURL: image });
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
       console.log(error?.message);
     }
@@ -39,7 +39,7 @@ const SignUp = () => {
     try {
       const data = await signInWithGoogle()
       await saveUser(data?.user)
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       console.log(err?.message);
     }

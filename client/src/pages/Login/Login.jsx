@@ -14,7 +14,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const location = useLocation()
-  const from = location?.state?.from?.pathname || '/'
+  const from = location?.state?.from?.pathname || '/dashboard'
 
   const {
     register,
@@ -32,7 +32,7 @@ const Login = () => {
       console.log(err?.message);
     }
   };
-console.log(user);
+
   // Google Signin
   const handleGoogleSignIn = async () => {
     try {
